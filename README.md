@@ -1,5 +1,7 @@
 # Help Scout API client
 
+https://developer.helpscout.com/mailbox-api/endpoints/conversations/list/
+
 This package contains a wrapper to query Help Scout's API.
 
 It has only been used with python 3. Python 2 might or might not work.

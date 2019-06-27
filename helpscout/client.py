@@ -13,6 +13,7 @@ from helpscout.model import HelpScoutObject
 
 
 logger = logging.getLogger('HelpScout')
+EmbeddedKey = '_embedded'
 
 
 class HelpScout:
@@ -114,27 +115,41 @@ class HelpScout:
         headers = self._authentication_headers()
         r = getattr(requests, method)(url, headers=headers, data=data)
         logger.debug('%s %s' % (method, url))
-        if r.ok:
+        ok, status_code = r.ok, r.status_code
+        if ok:
             response = r.json()
             yield from self._results_with_pagination(response, method)
-        elif r.status_code == 401:
+        elif status_code == 401:
             self._authenticate()
-            yield from self._hit(endpoint, method, data)
-        elif r.status_code == 429:
+            yield from self.hit(endpoint, method, data)
+        elif status_code == 429:
             self._handle_rate_limit_exceeded()
-            yield from self._hit(endpoint, method, data)
+            yield from self.hit(endpoint, method, data)
         else:
             raise HelpScoutException(r.text)
 
     def _results_with_pagination(self, response, method):
-        """Requests and yields pagination results."""
-        if '_embedded' not in response:
+        """Requests and yields pagination results.
+
+        Parameters
+        ----------
+        response: dict
+            A dictionary with a previous api response return value
+        method: str
+            The http method to hit the endpoint with.
+            One of {'get', 'post', 'put', 'patch', 'delete', 'head', 'options'}
+
+        Yields
+        dict
+            The dictionary response from help scout.
+        """
+        if EmbeddedKey not in response:
             yield response
             return
-        if isinstance(response['_embedded'], list):
-            yield from response['_embedded']
+        if isinstance(response[EmbeddedKey], list):
+            yield from response[EmbeddedKey]
         else:
-            yield response['_embedded']
+            yield response[EmbeddedKey]
         next_page = response.get('_links', {}).get('next')
         while next_page:
             headers = self._authentication_headers()
@@ -142,15 +157,17 @@ class HelpScout:
             r = getattr(requests, method)(next_page, headers=headers)
             if r.ok:
                 response = r.json()
-                if isinstance(response['_embedded'], list):
-                    yield from response['_embedded']
+                if isinstance(response[EmbeddedKey], list):
+                    yield from response[EmbeddedKey]
                 else:
-                    yield response['_embedded']
+                    yield response[EmbeddedKey]
                 next_page = response.get('_links', {}).get('next')
             elif r.status_code == 401:
                 self._authenticate()
             elif r.status_code == 429:
                 self._handle_rate_limit_exceeded()
+            else:
+                raise HelpScoutException(r.text)
 
     def _authenticate(self):
         """Authenticates with the API and gets a token for subsequent requests.
