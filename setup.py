@@ -21,6 +21,7 @@ setup(
     url='https://github.com/santiher/python-helpscout-v2',
     description='Wrapper to query Help Scout v2 API',
     long_description=readme(),
+    long_description_content_type='text/markdown',
     license='MIT',
     install_requires=['requests'],
     packages=['helpscout'],
