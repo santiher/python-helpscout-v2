@@ -4,6 +4,7 @@ class HelpScoutObject:
 
     def __init__(self, api_object):
         """Object build from an API dictionary.
+        Variable assignments to initialized objects is not expected to be done.
 
         Parameters
         ----------
@@ -18,7 +19,7 @@ class HelpScoutObject:
             - updatedAt
             - _links
         """
-        self._attrs = sorted(api_object)
+        self._attrs = tuple(sorted(api_object))
         for key, value in api_object.items():
             setattr(self, key, value)
 
@@ -59,11 +60,37 @@ class HelpScoutObject:
         -------
         type: The object's class
         """
+        existing_class = classes.get(entity_name)
+        if existing_class is not None:
+            return existing_class
         plural_letters = (-2 if entity_name.endswith('es') else
                           -1 if entity_name.endswith('s') else
                           None)
         class_name = entity_name.capitalize()[:plural_letters]
-        return type(class_name, (cls,), {'key': key})
+        classes[entity_name] = cls = type(class_name, (cls,), {'key': key})
+        return cls
+
+    def __eq__(self, other):
+        """Equality comparison."""
+        if self.__class__ is not other.__class__:
+            return False
+        if self._attrs != other._attrs:
+            return False
+        for attr in self._attrs:
+            if getattr(self, attr, None) != getattr(other, attr, None):
+                return False
+        return True
+
+    def __hash__(self):
+        """Hash function."""
+        def flatten(obj):
+            if isinstance(obj, (list, tuple)):
+                return tuple(flatten(item) for item in obj)
+            elif isinstance(obj, dict):
+                return tuple((k, flatten(obj[k])) for k in sorted(obj))
+            return obj
+        values = tuple(getattr(self, attr) for attr in self._attrs)
+        return hash(self._attrs + flatten(values))
 
     def __repr__(self):
         """Returns the object as a string."""
@@ -80,7 +107,4 @@ class HelpScoutObject:
     __str__ = __repr__
 
 
-ObjectKeys = {
-    'conversation': 'conversations',
-    'mailbox': 'mailboxes',
-    }
+classes = {}

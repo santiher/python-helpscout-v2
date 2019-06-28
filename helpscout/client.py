@@ -223,6 +223,7 @@ class HelpScout:
     def __eq__(self, other):
         """Equality comparison."""
         return (
+            self.__class__ is other.__class__ and
             self.app_id == other.app_id and
             self.app_secret == other.app_secret and
             self.base_url == other.base_url and
@@ -301,7 +302,9 @@ class HelpScoutEndpointRequester:
 
     def __eq__(self, other):
         """Equality comparison."""
-        return self.endpoint == other.endpoint and self.client == other.client
+        return (self.__class__ is other.__class__ and
+                self.endpoint == other.endpoint and
+                self.client == other.client)
 
     def __repr__(self):
         """Returns the object as a string."""
