@@ -1,8 +1,9 @@
 # Help Scout API client
 
-https://developer.helpscout.com/mailbox-api/endpoints/conversations/list/
-
 This package contains a wrapper to query Help Scout's API.
+The package tries to be as general and assume as little as possible about the
+API. Therefore, it will allow any endpoint to be requested and objects and
+types will be created on the fly.
 
 It has only been used with python 3. Python 2 might or might not work.
 
@@ -11,12 +12,28 @@ on the [API's documentation](https://developer.helpscout.com/mailbox-api/).
 The client contains as little internal knowledge of the API as possible, mostly
 authentication, pagination and how are objects returned.
 
+In order to handle pagination calls to API are done inside a generator.
+As a consequence, even post and deletes have to be "nexted" if using the *hit*
+method.
+
 ## Authentication
 
 In order to use the API you need an app id and app secret.
 
 More about credentials can be found in
 [helpscout's documentation](https://developer.helpscout.com/mailbox-api/overview/authentication/).
+
+## General use
+
+The general use is by instantiating a client and then hitting the API by 
+doing `client.<endpoint>.<method>(<resource_id>, <params>)`. Where:
+
+* *Endpoint* is one of the endpoints defined in the API's documentation.
+* *Method* is one of get, post, patch, put or delete as defined in the API.
+* *Resource id* can be None or the id of the specific resource to access,
+  update or delete. E.g.: a conversation id.
+* *Params* can be None, a string or a dictionary with the parameters to access
+  in the get method or the data to send otherwise.
 
 ## Examples
 
@@ -25,7 +42,7 @@ More about credentials can be found in
 ```python
 > from helpscout.client import HelpScout
 > hs = HelpScout(app_id='ax0912n', app_secret='axon129')
-> users = hs.users()
+> users = hs.users.get()
 > users[0]
 User(id=12391,
      firstName="John",
@@ -43,7 +60,7 @@ User(id=12391,
 9320
 ```
 
-### Hitting the API directly
+### Hitting the API directly to get all mailboxes
 
 ```python
 > from helpscout.client import HelpScout
@@ -67,13 +84,34 @@ User(id=12391,
 }
 ```
 
+### Hitting the API directly to get a specific mailbox
+
+```python
+> from helpscout.client import HelpScout
+> hs = HelpScout(app_id='laknsdo', app_secret='12haosd9')
+> for mailbox in hs.hit('mailboxes', 'get', resource_id=1930):
+>      print(mailbox)
+{'id': 1930,
+ 'name': 'Fake Support',
+ 'slug': '0912301u',
+ 'email': 'support@fake.com',
+ 'createdAt': '2018-12-20T20:00:00Z',
+ 'updatedAt': '2019-05-01T16:00:00Z',
+ '_links': {
+   'fields': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/fields/'},
+   'folders': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/folders/'},
+   'self': {'href': 'https://api.helpscout.net/v2/mailboxes/1930'}
+ }
+}
+```
+
 ### Listing conversations using a dictionary parameters
 
 ```python
 > from helpscout.client import HelpScout
 > hs = HelpScout(app_id='asd12', app_secret='onas912')
 > params = {'status': 'active'}
-> conversations = hs.conversations(params)
+> conversations = hs.conversations.get(params=params)
 ```
 
 ### Listing conversations using a string with parameters
@@ -82,5 +120,14 @@ User(id=12391,
 > from helpscout.client import HelpScout
 > hs = HelpScout(app_id='asdon123', app_secret='asdoin1')
 > params = 'query=(createdAt:[2019-06-20T00:00:00Z TO 2019-06-22T23:59:59Z])'
-> conversations = hs.conversations(params)
+> conversations = hs.conversations.get(params=params)
+```
+
+### Deleting a conversation
+
+```python
+> from helpscout.client import HelpScout
+> hs = HelpScout(app_id='asdon123', app_secret='asdoin1')
+> conversation_id = 10
+> hs.conversations.delete(resource_id=conversation_id)
 ```

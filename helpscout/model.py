@@ -38,7 +38,7 @@ class HelpScoutObject:
         """
         results = []
         for api_result in api_results:
-            for object_data in api_result[cls.key]:
+            for object_data in api_result.get(cls.key, []):
                 results.append(cls(object_data))
         return results
 

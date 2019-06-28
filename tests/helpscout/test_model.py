@@ -28,6 +28,14 @@ class TestHelpScoutObject(TestCase):
         self.assertEqual(users[1].id, 9)
         self.assertEqual(users[1].name, 'Matt')
 
+    def test_from_results_empty(self):
+        data = {}
+        data_generator = (data for _ in range(1))
+        cls = HelpScoutObject.cls('users', 'users')
+        users = cls.from_results(data_generator)
+        self.assertTrue(isinstance(users, list))
+        self.assertEqual(len(users), 0)
+
     def test_entity_class_name(self):
         cls = HelpScoutObject.cls('users', 'users')
         self.assertEqual(cls.__name__, 'User')

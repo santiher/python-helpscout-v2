@@ -38,9 +38,9 @@ class TestClient(TestCase):
                 patch('helpscout.client.HelpScout.hit') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = hit_return = 9
-            hs.get_objects(endpoint, params)
+            hs.get_objects(endpoint, params=params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get')
+            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get', None)
             cls.from_results.assert_called_with(hit_return)
 
     def test_get_objects_str_params(self):
@@ -50,9 +50,9 @@ class TestClient(TestCase):
                 patch('helpscout.client.HelpScout.hit') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = hit_return = 9
-            hs.get_objects(endpoint, params)
+            hs.get_objects(endpoint, params=params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get')
+            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get', None)
             cls.from_results.assert_called_with(hit_return)
 
     def test_get_objects_no_params(self):
@@ -64,7 +64,7 @@ class TestClient(TestCase):
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint, 'get')
+            hit.assert_called_with(endpoint, 'get', None)
             cls.from_results.assert_called_with(hit_return)
 
     def test_hit_no_access_token_ok(self):
@@ -108,6 +108,31 @@ class TestClient(TestCase):
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
             list(hs.hit(endpoint, method))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.get.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_called_once()
+            pages.assert_called_once_with(json_response, method)
+
+    def test_hit_resource_id_ok(self):
+        endpoint, method, resource_id = 'users', 'get', 4
+        full_url = self.url + endpoint + '/' + str(resource_id)
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.get.return_value = MagicMock()
+            response.ok = True
+            response.json.return_value = json_response = {'a': 'b'}
+            list(hs.hit(endpoint, method, resource_id))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -610,6 +635,30 @@ class TestClient(TestCase):
                 hs._handle_rate_limit_exceeded()
             logger.warning.assert_called_with('Rate limit exceeded.')
             time.sleep.assert_not_called()
+
+    def test_getattr_requester_get(self):
+        endpoint, params = 'users', {'id': '10', 'name': 'Mike'}
+        hs = self._get_client()
+        with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
+                patch('helpscout.client.HelpScout.hit') as hit:
+            HelpScoutObject.cls.return_value = cls = MagicMock()
+            hit.return_value = hit_return = 9
+            getattr(hs, endpoint).get(params=params)
+            HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
+            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get', None)
+            cls.from_results.assert_called_with(hit_return)
+
+    def test_getattr_requester_delete_resource_id(self):
+        endpoint, resource_id = 'users', 10
+        hs = self._get_client()
+        with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
+                patch('helpscout.client.HelpScout.hit') as hit:
+            HelpScoutObject.cls.return_value = cls = MagicMock()
+            hit.return_value = (x for x in range(1))
+            getattr(hs, endpoint).delete(resource_id=resource_id)
+            hit.assert_called_with(endpoint, 'delete', resource_id=resource_id)
+            HelpScoutObject.cls.assert_not_called()
+            cls.from_results.assert_not_called()
 
 
 if __name__ == '__main__':
