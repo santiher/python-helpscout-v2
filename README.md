@@ -5,8 +5,6 @@ The package tries to be as general and assume as little as possible about the
 API. Therefore, it will allow any endpoint to be requested and objects and
 types will be created on the fly.
 
-It has only been used with python 3. Python 2 might or might not work.
-
 Information about the available endpoints, objects and other stuff can be found
 on the [API's documentation](https://developer.helpscout.com/mailbox-api/).
 The client contains as little internal knowledge of the API as possible, mostly
@@ -40,7 +38,7 @@ doing `client.<endpoint>.<method>(<resource_id>, <params>)`. Where:
 ### Listing all users
 
 ```python
-> from helpscout.client import HelpScout
+> from helpscout import HelpScout
 > hs = HelpScout(app_id='ax0912n', app_secret='axon129')
 > users = hs.users.get()
 > users[0]

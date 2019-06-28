@@ -9,10 +9,26 @@ def version():
     return '0.0.0'
 
 
+def readme():
+    with open('README.md') as f:
+        return f.read()
+
+
 setup(
     name='helpscout',
     version=version(),
+    author='santiher',
+    url='https://github.com/santiher/python-helpscout-v2',
+    description='Wrapper to query Help Scout v2 API',
+    long_description=readme(),
+    license='MIT',
     install_requires=['requests'],
     packages=['helpscout'],
     test_suite='tests',
+    classifiers=[
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3'
+        ]
 )
