@@ -117,6 +117,87 @@ class TestClient(TestCase):
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
+    def test_hit_post_ok(self):
+        endpoint, method = 'users', 'post'
+        full_url = self.url + endpoint
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.post.return_value = MagicMock()
+            response.status_code = 201
+            response.ok = True
+            response.json.return_value = {'a': 'b'}
+            ret = list(hs.hit(endpoint, method))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.post.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_not_called()
+            pages.assert_not_called()
+            self.assertEqual(ret, [None])
+
+    def test_hit_delete_ok(self):
+        endpoint, method = 'users', 'delete'
+        full_url = self.url + endpoint
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.delete.return_value = MagicMock()
+            response.status_code = 204
+            response.ok = True
+            response.json.return_value = {'a': 'b'}
+            ret = list(hs.hit(endpoint, method))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.delete.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_not_called()
+            pages.assert_not_called()
+            self.assertEqual(ret, [None])
+
+    def test_hit_patch_ok(self):
+        endpoint, method = 'users', 'patch'
+        full_url = self.url + endpoint
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.patch.return_value = MagicMock()
+            response.status_code = 204
+            response.ok = True
+            response.json.return_value = {'a': 'b'}
+            ret = list(hs.hit(endpoint, method))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.patch.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_not_called()
+            pages.assert_not_called()
+            self.assertEqual(ret, [None])
+
     def test_hit_token_expired(self):
         endpoint, method = 'users', 'get'
         full_url = self.url + endpoint

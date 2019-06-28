@@ -116,7 +116,10 @@ class HelpScout:
         r = getattr(requests, method)(url, headers=headers, data=data)
         logger.debug('%s %s' % (method, url))
         ok, status_code = r.ok, r.status_code
-        if ok:
+        if status_code in (201, 204):
+            yield
+            return
+        elif ok:
             response = r.json()
             yield from self._results_with_pagination(response, method)
         elif status_code == 401:
