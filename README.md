@@ -14,6 +14,13 @@ In order to handle pagination calls to API are done inside a generator.
 As a consequence, even post and deletes have to be "nexted" if using the *hit*
 method.
 
+## Installation
+
+The package can be installed cloning the repository and doing
+`python setup.py install` or `pip install .`.
+
+It can also be install from pypi.org doing `pip install python-helpscout-v2`.
+
 ## Authentication
 
 In order to use the API you need an app id and app secret.

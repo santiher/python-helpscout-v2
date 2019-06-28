@@ -15,7 +15,7 @@ def readme():
 
 
 setup(
-    name='helpscout',
+    name='python-helpscout-v2',
     version=version(),
     author='santiher',
     url='https://github.com/santiher/python-helpscout-v2',
