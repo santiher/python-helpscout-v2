@@ -345,14 +345,15 @@ class TestClient(TestCase):
                 {'msg': 'hello'},
                 {'msg': 'bye'},
             ],
-            '_links': {'next': 'http://helpscout.com/next_page/110'}
+            '_links': {'next': {'href': 'http://helpscout.com/next_page/110'}}
         }
         responses_values = [
             {EmbeddedKey: [
                 {'msg': 'blink 1'},
                 {'msg': 'blink 2'},
                 ],
-             '_links': {'next': 'http://helpscout.com/next_page/111'}},
+             '_links': {'next':
+                        {'href': 'http://helpscout.com/next_page/111'}}},
             {EmbeddedKey: [
                 {'msg': 'see ya'},
                 ],
@@ -384,12 +385,15 @@ class TestClient(TestCase):
             self.assertEqual(auth_headers.call_count, 2)
             self.assertEqual(
                 logger.debug.call_args_list,
-                [call(method + ' ' + response_value['_links']['next']),
-                 call(method + ' ' + responses_values[0]['_links']['next'])])
+                [call(method + ' ' + response_value['_links']['next']['href']),
+                 call(method + ' ' + responses_values[0]['_links']['next'][
+                     'href'])])
             self.assertEqual(
                 requests.get.call_args_list,
-                [call(response_value['_links']['next'], headers=headers),
-                 call(responses_values[0]['_links']['next'], headers=headers)
+                [call(response_value['_links']['next']['href'],
+                      headers=headers),
+                 call(responses_values[0]['_links']['next']['href'],
+                      headers=headers)
                  ])
             responses[0].json.assert_called_once()
             responses[1].json.assert_called_once()
@@ -403,14 +407,15 @@ class TestClient(TestCase):
                 {'msg': 'hello'},
                 {'msg': 'bye'},
             ],
-            '_links': {'next': 'http://helpscout.com/next_page/110'}
+            '_links': {'next': {'href': 'http://helpscout.com/next_page/110'}}
         }
         responses_values = [
             {EmbeddedKey: [
                 {'msg': 'blink 1'},
                 {'msg': 'blink 2'},
                 ],
-             '_links': {'next': 'http://helpscout.com/next_page/111'}},
+             '_links': {'next':
+                        {'href': 'http://helpscout.com/next_page/111'}}},
             {EmbeddedKey: [
                 {'msg': 'see ya'},
                 ],
@@ -444,14 +449,18 @@ class TestClient(TestCase):
             self.assertEqual(auth_headers.call_count, 3)
             self.assertEqual(
                 logger.debug.call_args_list,
-                [call(method + ' ' + response_value['_links']['next']),
-                 call(method + ' ' + response_value['_links']['next']),
-                 call(method + ' ' + responses_values[0]['_links']['next'])])
+                [call(method + ' ' + response_value['_links']['next']['href']),
+                 call(method + ' ' + response_value['_links']['next']['href']),
+                 call(method + ' ' + responses_values[0]['_links']['next'][
+                     'href'])])
             self.assertEqual(
                 requests.get.call_args_list,
-                [call(response_value['_links']['next'], headers=headers),
-                 call(response_value['_links']['next'], headers=headers),
-                 call(responses_values[0]['_links']['next'], headers=headers)
+                [call(response_value['_links']['next']['href'],
+                      headers=headers),
+                 call(response_value['_links']['next']['href'],
+                      headers=headers),
+                 call(responses_values[0]['_links']['next']['href'],
+                      headers=headers)
                  ])
             responses[1].json.assert_called_once()
             responses[2].json.assert_called_once()
@@ -465,14 +474,15 @@ class TestClient(TestCase):
                 {'msg': 'hello'},
                 {'msg': 'bye'},
             ],
-            '_links': {'next': 'http://helpscout.com/next_page/110'}
+            '_links': {'next': {'href': 'http://helpscout.com/next_page/110'}}
         }
         responses_values = [
             {EmbeddedKey: [
                 {'msg': 'blink 1'},
                 {'msg': 'blink 2'},
                 ],
-             '_links': {'next': 'http://helpscout.com/next_page/111'}},
+             '_links': {'next':
+                        {'href': 'http://helpscout.com/next_page/111'}}},
             {EmbeddedKey: [
                 {'msg': 'see ya'},
                 ],
@@ -506,14 +516,18 @@ class TestClient(TestCase):
             self.assertEqual(auth_headers.call_count, 3)
             self.assertEqual(
                 logger.debug.call_args_list,
-                [call(method + ' ' + response_value['_links']['next']),
-                 call(method + ' ' + response_value['_links']['next']),
-                 call(method + ' ' + responses_values[0]['_links']['next'])])
+                [call(method + ' ' + response_value['_links']['next']['href']),
+                 call(method + ' ' + response_value['_links']['next']['href']),
+                 call(method + ' ' + responses_values[0]['_links']['next'][
+                     'href'])])
             self.assertEqual(
                 requests.get.call_args_list,
-                [call(response_value['_links']['next'], headers=headers),
-                 call(response_value['_links']['next'], headers=headers),
-                 call(responses_values[0]['_links']['next'], headers=headers)
+                [call(response_value['_links']['next']['href'],
+                      headers=headers),
+                 call(response_value['_links']['next']['href'],
+                      headers=headers),
+                 call(responses_values[0]['_links']['next']['href'],
+                      headers=headers)
                  ])
             responses[0].json.assert_not_called()
             responses[1].json.assert_called_once()
@@ -528,14 +542,15 @@ class TestClient(TestCase):
                 {'msg': 'hello'},
                 {'msg': 'bye'},
             ],
-            '_links': {'next': 'http://helpscout.com/next_page/110'}
+            '_links': {'next': {'href': 'http://helpscout.com/next_page/110'}}
         }
         responses_values = [
             {EmbeddedKey: [
                 {'msg': 'blink 1'},
                 {'msg': 'blink 2'},
                 ],
-             '_links': {'next': 'http://helpscout.com/next_page/111'}},
+             '_links': {'next':
+                        {'href': 'http://helpscout.com/next_page/111'}}},
             {EmbeddedKey: [
                 {'msg': 'see ya'},
                 ],

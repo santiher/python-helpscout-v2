@@ -1,4 +1,4 @@
-class HelpScoutObject:
+class HelpScoutObject(object):
 
     key = ''
 
@@ -60,15 +60,30 @@ class HelpScoutObject:
         -------
         type: The object's class
         """
-        existing_class = classes.get(entity_name)
-        if existing_class is not None:
-            return existing_class
         plural_letters = (-2 if entity_name.endswith('es') else
                           -1 if entity_name.endswith('s') else
                           None)
         class_name = entity_name.capitalize()[:plural_letters]
-        classes[entity_name] = cls = type(class_name, (cls,), {'key': key})
+        existing_class = globals().get(class_name)
+        if existing_class is not None:
+            return existing_class
+        globals()[class_name] = cls = type(class_name, (cls,), {'key': key})
         return cls
+
+    def __reduce__(self):
+        """For pickling with HelpScoutObject."""
+        class_attributes = self.__class__.__name__, self.key
+        return get_subclass_instance, class_attributes, self.__getstate__()
+
+    def __getstate__(self):
+        """Pickle dump implementation."""
+        return self._attrs, tuple(getattr(self, attr) for attr in self._attrs)
+
+    def __setstate__(self, state):
+        """Pickle load implementation."""
+        self._attrs = state[0]
+        for attr, value in zip(self._attrs, state[1]):
+            setattr(self, attr, value)
 
     def __eq__(self, other):
         """Equality comparison."""
@@ -107,4 +122,20 @@ class HelpScoutObject:
     __str__ = __repr__
 
 
-classes = {}
+def get_subclass_instance(class_name, key):
+    """Gets a dynamic class from a class name for unpickling.
+
+    Parameters
+    ----------
+    name: str
+        A class name, expected to start with Upper case.
+
+    Returns
+    -------
+    A helpscout object subclass.
+    """
+    cls = globals().get(class_name)
+    if cls is None:
+        cls = type(class_name, (HelpScoutObject,), {'key': key})
+        globals()[class_name] = cls
+    return cls.__new__(cls)

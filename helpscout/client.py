@@ -2,7 +2,10 @@ import logging
 import time
 
 from functools import partial
-from urllib.parse import urljoin
+try:  # Python 3
+    from urllib.parse import urljoin
+except ImportError:  # Python 2
+    from urlparse import urljoin
 
 import requests
 
@@ -136,13 +139,16 @@ class HelpScout:
             yield
         elif ok:
             response = r.json()
-            yield from self._results_with_pagination(response, method)
+            for item in self._results_with_pagination(response, method):
+                yield item
         elif status_code == 401:
             self._authenticate()
-            yield from self.hit(endpoint, method, resource_id, data)
+            for item in self.hit(endpoint, method, resource_id, data):
+                yield item
         elif status_code == 429:
             self._handle_rate_limit_exceeded()
-            yield from self.hit(endpoint, method, resource_id, data)
+            for item in self.hit(endpoint, method, resource_id, data):
+                yield item
         else:
             raise HelpScoutException(r.text)
 
@@ -165,10 +171,12 @@ class HelpScout:
             yield response
             return
         if isinstance(response[EmbeddedKey], list):
-            yield from response[EmbeddedKey]
+            for item in response[EmbeddedKey]:
+                yield item
         else:
             yield response[EmbeddedKey]
-        next_page = response.get('_links', {}).get('next')
+        next_obj = response.get('_links', {}).get('next', {})
+        next_page = None if next_obj is None else next_obj.get('href')
         while next_page:
             headers = self._authentication_headers()
             logger.debug('%s %s' % (method, next_page))
@@ -176,10 +184,12 @@ class HelpScout:
             if r.ok:
                 response = r.json()
                 if isinstance(response[EmbeddedKey], list):
-                    yield from response[EmbeddedKey]
+                    for item in response[EmbeddedKey]:
+                        yield item
                 else:
                     yield response[EmbeddedKey]
-                next_page = response.get('_links', {}).get('next')
+                next_obj = response.get('_links', {}).get('next', {})
+                next_page = None if next_obj is None else next_obj.get('href')
             elif r.status_code == 401:
                 self._authenticate()
             elif r.status_code == 429:
