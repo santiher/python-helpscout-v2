@@ -40,7 +40,7 @@ class TestClient(TestCase):
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params=params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get', None)
+            hit.assert_called_with(endpoint, 'get', None, params=params)
             cls.from_results.assert_called_with(hit_return)
 
     def test_get_objects_str_params(self):
@@ -52,7 +52,7 @@ class TestClient(TestCase):
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params=params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get', None)
+            hit.assert_called_with(endpoint, 'get', None, params=params)
             cls.from_results.assert_called_with(hit_return)
 
     def test_get_objects_no_params(self):
@@ -64,8 +64,23 @@ class TestClient(TestCase):
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint, 'get', None)
+            hit.assert_called_with(endpoint, 'get', None, params=params)
             cls.from_results.assert_called_with(hit_return)
+
+    def test_get_objects_resource_id(self):
+        user = {'id': '10', 'name': 'Mike'}
+        endpoint, resource_id = 'users', 10
+        hs = self._get_client()
+        with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
+                patch('helpscout.client.HelpScout.hit') as hit:
+            HelpScoutObject.cls.return_value = cls = MagicMock()
+            cls.from_results.return_value = [user]
+            hit.return_value = hit_return = user
+            data = hs.get_objects(endpoint, resource_id=resource_id)
+            HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
+            hit.assert_called_with(endpoint, 'get', 10, params=None)
+            cls.from_results.assert_called_with(hit_return)
+            self.assertEqual(data, user)
 
     def test_hit_no_access_token_ok(self):
         endpoint, method = 'users', 'get'
@@ -133,6 +148,85 @@ class TestClient(TestCase):
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
             list(hs.hit(endpoint, method, resource_id))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.get.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_called_once()
+            pages.assert_called_once_with(json_response, method)
+
+    def test_hit_params_dict_ok(self):
+        params, params_str = {'embed': 'threads'}, '?embed=threads'
+        endpoint, method = 'users', 'get'
+        full_url = self.url + endpoint + params_str
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.get.return_value = MagicMock()
+            response.ok = True
+            response.json.return_value = json_response = {'a': 'b'}
+            list(hs.hit(endpoint, method, None, params=params))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.get.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_called_once()
+            pages.assert_called_once_with(json_response, method)
+
+    def test_hit_resource_id_with_params_dict_ok(self):
+        params, params_str = {'embed': 'threads'}, '?embed=threads'
+        endpoint, method, resource_id = 'users', 'get', 4
+        full_url = self.url + endpoint + '/' + str(resource_id) + params_str
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.get.return_value = MagicMock()
+            response.ok = True
+            response.json.return_value = json_response = {'a': 'b'}
+            list(hs.hit(endpoint, method, resource_id, params=params))
+            # Asserts
+            auth.assert_not_called()
+            auth_headers.assert_called_once()
+            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            requests.get.assert_called_once_with(
+                full_url, headers=headers, data=None)
+            response.json.assert_called_once()
+            pages.assert_called_once_with(json_response, method)
+
+    def test_hit_resource_id_with_params_str_ok(self):
+        params_str = 'embed=threads'
+        endpoint, method, resource_id = 'users', 'get', 4
+        full_url = (self.url + endpoint + '/' + str(resource_id) + '?' +
+                    params_str)
+        hs_path = 'helpscout.client.HelpScout.'
+        hs = self._get_client(token='abc')
+        with patch('helpscout.client.requests') as requests, \
+                patch('helpscout.client.logger') as logger, \
+                patch(hs_path + '_authenticate') as auth, \
+                patch(hs_path + '_authentication_headers') as auth_headers, \
+                patch(hs_path + '_results_with_pagination') as pages:
+            # Setup
+            auth_headers.return_value = headers = {'token': 'abc'}
+            response = requests.get.return_value = MagicMock()
+            response.ok = True
+            response.json.return_value = json_response = {'a': 'b'}
+            list(hs.hit(endpoint, method, resource_id, params=params_str))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -660,7 +754,7 @@ class TestClient(TestCase):
             hit.return_value = hit_return = 9
             getattr(hs, endpoint).get(params=params)
             HelpScoutObject.cls.assert_called_with(endpoint, endpoint)
-            hit.assert_called_with(endpoint + '?id=10&name=Mike', 'get', None)
+            hit.assert_called_with(endpoint, 'get', None, params=params)
             cls.from_results.assert_called_with(hit_return)
 
     def test_getattr_requester_delete_resource_id(self):

@@ -36,6 +36,14 @@ class TestHelpScoutObject(TestCase):
         self.assertTrue(isinstance(users, list))
         self.assertEqual(len(users), 0)
 
+    def test_from_results_single(self):
+        data = {'id': 9}
+        data_generator = (data for _ in range(1))
+        cls = HelpScoutObject.cls('users', 'users')
+        users = cls.from_results(data_generator)
+        self.assertTrue(isinstance(users, list))
+        self.assertEqual(len(users), 1)
+
     def test_entity_class_name(self):
         cls = HelpScoutObject.cls('users', 'users')
         self.assertEqual(cls.__name__, 'User')

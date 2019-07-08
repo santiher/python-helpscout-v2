@@ -136,3 +136,13 @@ User(id=12391,
 > conversation_id = 10
 > hs.conversations.delete(resource_id=conversation_id)
 ```
+
+### Requesting a pre-made report
+
+```python
+> from helpscout.client import HelpScout
+> hs = HelpScout(app_id='asdon123', app_secret='asdoin1')
+> report_url = 'reports/happiness?start=2019-06-01T00:00:00Z&end=2019-06-15:00:00Z'
+> next(hs.hit(report_url, 'get'))
+...
+```

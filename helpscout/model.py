@@ -29,7 +29,7 @@ class HelpScoutObject(object):
 
         Parameters
         ----------
-        api_results: generator({cls.key: [dict]})
+        api_results: generator({cls.key: [dict]}) or generator(dict)
             A generator returning API responses that cointain a list of
             objects each under the class key.
 
@@ -39,8 +39,9 @@ class HelpScoutObject(object):
         """
         results = []
         for api_result in api_results:
-            for object_data in api_result.get(cls.key, []):
-                results.append(cls(object_data))
+            for object_data in api_result.get(cls.key, [api_result]):
+                if len(object_data) > 0:
+                    results.append(cls(object_data))
         return results
 
     @classmethod

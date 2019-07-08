@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [0.2.1] - 2019-07-08
+### Fixed
+- Object creation when requesting a single object.
+- Hit an endpoint with a resource_id and url parameters.
+
 ## [0.2.0] - 2019-07-01
 ### Added
 - Pickle compatible objects

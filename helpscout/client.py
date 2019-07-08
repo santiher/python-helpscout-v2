@@ -95,16 +95,14 @@ class HelpScout:
         [HelpScoutObject]
             A list of objects returned by the api.
         """
-        if params:
-            if isinstance(params, dict):
-                params = '&'.join('%s=%s' % (k, v) for k, v in params.items())
-            url = '%s?%s' % (endpoint, params)
-        else:
-            url = endpoint
         cls = HelpScoutObject.cls(endpoint, endpoint)
-        return cls.from_results(self.hit(url, 'get', resource_id))
+        results = cls.from_results(
+            self.hit(endpoint, 'get', resource_id, params=params))
+        if resource_id is not None:
+            return results[0]
+        return results
 
-    def hit(self, endpoint, method, resource_id=None, data=None):
+    def hit(self, endpoint, method, resource_id=None, data=None, params=None):
         """Hits the api and yields the data.
 
         Parameters
@@ -114,12 +112,15 @@ class HelpScout:
         method: str
             The http method to hit the endpoint with.
             One of {'get', 'post', 'put', 'patch', 'delete', 'head', 'options'}
-        data: dict or None
-            A dictionary with the data to send to the API.
         resource_id: int or str or None
             The id of the resource in the endpoint to query.
             E.g.: in "GET /v2/conversations/123 HTTP/1.1" the id would be 123.
             If None is provided, nothing will be done
+        data: dict or None
+            A dictionary with the data to send to the API as json.
+        params: dict or str or None
+            Dictionary with the parameters to send to the url.
+            Or the parameters already un url format.
 
         Yields
         -------
@@ -131,6 +132,10 @@ class HelpScout:
         url = urljoin(self.base_url, endpoint)
         if resource_id is not None:
             url = urljoin(url + '/', str(resource_id))
+        if params:
+            if isinstance(params, dict):
+                params = '&'.join('%s=%s' % (k, v) for k, v in params.items())
+            url = '%s?%s' % (url, params)
         headers = self._authentication_headers()
         r = getattr(requests, method)(url, headers=headers, data=data)
         logger.debug('%s %s' % (method, url))
