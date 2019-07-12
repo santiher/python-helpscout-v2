@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [0.2.2] - 2019-07-12
+### Fixed
+- Send json data actually as json.
+
 ## [0.2.1] - 2019-07-08
 ### Fixed
 - Object creation when requesting a single object.

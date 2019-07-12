@@ -103,7 +103,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
@@ -128,7 +128,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
@@ -153,7 +153,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
@@ -179,7 +179,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
@@ -205,7 +205,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
@@ -232,7 +232,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
 
@@ -258,7 +258,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.post.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_not_called()
             pages.assert_not_called()
             self.assertEqual(ret, [None])
@@ -285,7 +285,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.delete.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_not_called()
             pages.assert_not_called()
             self.assertEqual(ret, [None])
@@ -312,7 +312,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.patch.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_not_called()
             pages.assert_not_called()
             self.assertEqual(ret, [None])
@@ -341,7 +341,7 @@ class TestClient(TestCase):
                 [call(method + ' ' + full_url) for _ in range(2)])
             self.assertEqual(
                 requests.get.call_args_list,
-                [call(full_url, headers=headers, data=None) for _ in range(2)])
+                [call(full_url, headers=headers, json=None) for _ in range(2)])
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
             auth.assert_called_once()
@@ -371,7 +371,7 @@ class TestClient(TestCase):
                 [call(method + ' ' + full_url) for _ in range(2)])
             self.assertEqual(
                 requests.get.call_args_list,
-                [call(full_url, headers=headers, data=None) for _ in range(2)])
+                [call(full_url, headers=headers, json=None) for _ in range(2)])
             response.json.assert_called_once()
             pages.assert_called_once_with(json_response, method)
             rate_limit.assert_called_once()
@@ -402,7 +402,7 @@ class TestClient(TestCase):
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
-                full_url, headers=headers, data=None)
+                full_url, headers=headers, json=None)
             response.json.assert_not_called()
             pages.assert_not_called()
             rate_limit.assert_not_called()

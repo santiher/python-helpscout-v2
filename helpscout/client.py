@@ -137,7 +137,7 @@ class HelpScout:
                 params = '&'.join('%s=%s' % (k, v) for k, v in params.items())
             url = '%s?%s' % (url, params)
         headers = self._authentication_headers()
-        r = getattr(requests, method)(url, headers=headers, data=data)
+        r = getattr(requests, method)(url, headers=headers, json=data)
         logger.debug('%s %s' % (method, url))
         ok, status_code = r.ok, r.status_code
         if status_code in (201, 204):
