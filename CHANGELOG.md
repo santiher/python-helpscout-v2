@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [0.2.3] - 2019-07-16
+### Fixed
+- Setting attributes to HelpScout objects adds them to the attributes list.
+
 ## [0.2.2] - 2019-07-12
 ### Fixed
 - Send json data actually as json.

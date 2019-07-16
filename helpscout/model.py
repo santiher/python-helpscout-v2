@@ -71,6 +71,22 @@ class HelpScoutObject(object):
         globals()[class_name] = cls = type(class_name, (cls,), {'key': key})
         return cls
 
+    def __setattr__(self, attr, value):
+        """Sets an attribute to an object and adds it to the attributes list.
+
+        Parameters
+        ----------
+        attr: str
+        value: object
+        """
+        if attr == '_attrs':
+            super(HelpScoutObject, self).__setattr__(attr, value)
+        elif attr not in self._attrs:
+            self._attrs = tuple(sorted(self._attrs + (attr,)))
+            super(HelpScoutObject, self).__setattr__(attr, value)
+        else:
+            super(HelpScoutObject, self).__setattr__(attr, value)
+
     def __reduce__(self):
         """For pickling with HelpScoutObject."""
         class_attributes = self.__class__.__name__, self.key
