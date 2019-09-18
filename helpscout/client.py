@@ -97,12 +97,43 @@ class HelpScout:
         """
         cls = HelpScoutObject.cls(endpoint, endpoint)
         results = cls.from_results(
-            self.hit(endpoint, 'get', resource_id, params=params))
+            self.hit_(endpoint, 'get', resource_id, params=params))
         if resource_id is not None:
             return results[0]
         return results
 
     def hit(self, endpoint, method, resource_id=None, data=None, params=None):
+        """Hits the api and returns all the data.
+        If several calls are needed due to pagination, control won't be
+        returned to the caller until all is retrieved.
+
+        Parameters
+        ----------
+        endpoint: str
+            The API endpoint.
+        method: str
+            The http method to hit the endpoint with.
+            One of {'get', 'post', 'put', 'patch', 'delete', 'head', 'options'}
+        resource_id: int or str or None
+            The id of the resource in the endpoint to query.
+            E.g.: in "GET /v2/conversations/123 HTTP/1.1" the id would be 123.
+            If None is provided, nothing will be done
+        data: dict or None
+            A dictionary with the data to send to the API as json.
+        params: dict or str or None
+            Dictionary with the parameters to send to the url.
+            Or the parameters already un url format.
+
+        Returns
+        -------
+        [dict] or [None]
+            dict: when several objects are received from the API, a list of
+                  dictionaries with HelpScout's _embedded data will be returned
+            None if http 201 created or 204 no content are received.
+        """
+        return list(self.hit_(endpoint, method, resource_id, data, params))
+
+    def hit_(self, endpoint, method, resource_id=None, data=None, params=None):
         """Hits the api and yields the data.
 
         Parameters
@@ -123,9 +154,10 @@ class HelpScout:
             Or the parameters already un url format.
 
         Yields
-        -------
-        dict
+        ------
+        dict or None
             Dictionary with HelpScout's _embedded data.
+            None if http 201 created or 204 no content are received.
         """
         if self.access_token is None:
             self._authenticate()
@@ -148,11 +180,11 @@ class HelpScout:
                 yield item
         elif status_code == 401:
             self._authenticate()
-            for item in self.hit(endpoint, method, resource_id, data):
+            for item in self.hit_(endpoint, method, resource_id, data):
                 yield item
         elif status_code == 429:
             self._handle_rate_limit_exceeded()
-            for item in self.hit(endpoint, method, resource_id, data):
+            for item in self.hit_(endpoint, method, resource_id, data):
                 yield item
         else:
             raise HelpScoutException(r.text)
@@ -282,6 +314,9 @@ class HelpScoutEndpointRequester:
 
     def __getattr__(self, method):
         """Catches http methods like get, post, patch, put and delete.
+        Returns a subrequester when methods not named after http methods are
+        requested, as this are considered attributes of the main object, like
+        tags of a conversation.
 
         Parameters
         ----------
@@ -291,11 +326,41 @@ class HelpScoutEndpointRequester:
         Returns
         -------
         client.get_objects return value for the *get* method.
-        client.hit return value for other methods.
+        client.hit return value for other http named methods.
+        HelpScoutEndpointRequester when other attributes are accessed, this is
+          expected to be used mainly for subattributes of an endpoint or
+          subendpoints of specific resources, like tags from a conversation.
         """
         if method == 'get':
             return partial(self.client.get_objects, self.endpoint)
-        return partial(self._yielded_function, method)
+        elif method in ('head', 'post', 'put', 'delete', 'patch', 'connect',
+                        'options', 'trace'):
+            return partial(self._yielded_function, method)
+        else:
+            return HelpScoutEndpointRequester(
+                self.client, urljoin(self.endpoint + '/', str(method)))
+
+    def __getitem__(self, resource_id):
+        """Returns a second endpoint requester extending the endpoint to a
+        specific resource_id or resource_name.
+
+        This is intented to access things such as conversations tags or notes,
+        whose url are like 'conversations/%s/tags' % conversation_id
+
+        Parameters
+        ----------
+        resource_id: int or str
+            The resource id or attribute available in the API through a
+            specific call.
+
+        Returns
+        -------
+        HelpScoutEndpointRequester
+            A second endpoint requester for the specific resource id of the
+            main requester's endpoint.
+        """
+        return HelpScoutEndpointRequester(
+                self.client, urljoin(self.endpoint + '/', str(resource_id)))
 
     def _yielded_function(self, method, *args, **kwargs):
         """Calls a generator function and calls next.
@@ -313,7 +378,7 @@ class HelpScoutEndpointRequester:
         -------
         client.hit yielded value.
         """
-        return next(self.client.hit(self.endpoint, method, *args, **kwargs))
+        return next(self.client.hit_(self.endpoint, method, *args, **kwargs))
 
     def __eq__(self, other):
         """Equality comparison."""

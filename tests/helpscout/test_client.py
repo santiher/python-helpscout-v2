@@ -1,7 +1,8 @@
+from functools import partial
 from unittest import main, TestCase
 from unittest.mock import call, MagicMock, patch, PropertyMock
 
-from helpscout.client import EmbeddedKey, HelpScout
+from helpscout.client import EmbeddedKey, HelpScout, HelpScoutEndpointRequester
 from helpscout.exceptions import (HelpScoutException,
                                   HelpScoutAuthenticationException,
                                   HelpScoutRateLimitExceededException)
@@ -35,7 +36,7 @@ class TestClient(TestCase):
         endpoint, params = 'users', {'id': '10', 'name': 'Mike'}
         hs = self._get_client()
         with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
-                patch('helpscout.client.HelpScout.hit') as hit:
+                patch('helpscout.client.HelpScout.hit_') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params=params)
@@ -47,7 +48,7 @@ class TestClient(TestCase):
         endpoint, params = 'users', 'id=10&name=Mike'
         hs = self._get_client()
         with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
-                patch('helpscout.client.HelpScout.hit') as hit:
+                patch('helpscout.client.HelpScout.hit_') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params=params)
@@ -59,7 +60,7 @@ class TestClient(TestCase):
         endpoint, params = 'users', None
         hs = self._get_client()
         with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
-                patch('helpscout.client.HelpScout.hit') as hit:
+                patch('helpscout.client.HelpScout.hit_') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = hit_return = 9
             hs.get_objects(endpoint, params)
@@ -72,7 +73,7 @@ class TestClient(TestCase):
         endpoint, resource_id = 'users', 10
         hs = self._get_client()
         with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
-                patch('helpscout.client.HelpScout.hit') as hit:
+                patch('helpscout.client.HelpScout.hit_') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             cls.from_results.return_value = [user]
             hit.return_value = hit_return = user
@@ -97,7 +98,7 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method))
+            list(hs.hit_(endpoint, method))
             # Asserts
             auth.assert_called_once()
             auth_headers.assert_called_once()
@@ -122,7 +123,7 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method))
+            list(hs.hit_(endpoint, method))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -147,7 +148,7 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method, resource_id))
+            list(hs.hit_(endpoint, method, resource_id))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -173,7 +174,7 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method, None, params=params))
+            list(hs.hit_(endpoint, method, None, params=params))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -199,7 +200,7 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method, resource_id, params=params))
+            list(hs.hit_(endpoint, method, resource_id, params=params))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -226,7 +227,7 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method, resource_id, params=params_str))
+            list(hs.hit_(endpoint, method, resource_id, params=params_str))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -252,7 +253,7 @@ class TestClient(TestCase):
             response.status_code = 201
             response.ok = True
             response.json.return_value = {'a': 'b'}
-            ret = list(hs.hit(endpoint, method))
+            ret = list(hs.hit_(endpoint, method))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -279,7 +280,7 @@ class TestClient(TestCase):
             response.status_code = 204
             response.ok = True
             response.json.return_value = {'a': 'b'}
-            ret = list(hs.hit(endpoint, method))
+            ret = list(hs.hit_(endpoint, method))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -306,7 +307,7 @@ class TestClient(TestCase):
             response.status_code = 204
             response.ok = True
             response.json.return_value = {'a': 'b'}
-            ret = list(hs.hit(endpoint, method))
+            ret = list(hs.hit_(endpoint, method))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
@@ -333,7 +334,7 @@ class TestClient(TestCase):
             type(response).ok = PropertyMock(side_effect=[False, True])
             type(response).status_code = PropertyMock(side_effect=[401, 200])
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method))
+            list(hs.hit_(endpoint, method))
             # Asserts
             self.assertEqual(auth_headers.call_count, 2)
             self.assertEqual(
@@ -363,7 +364,7 @@ class TestClient(TestCase):
             type(response).ok = PropertyMock(side_effect=[False, True])
             type(response).status_code = PropertyMock(side_effect=[429, 200])
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit(endpoint, method))
+            list(hs.hit_(endpoint, method))
             # Asserts
             self.assertEqual(auth_headers.call_count, 2)
             self.assertEqual(
@@ -397,7 +398,7 @@ class TestClient(TestCase):
             response.json.return_value = {'a': 'b'}
             # Call
             with self.assertRaises(HelpScoutException):
-                list(hs.hit(endpoint, method))
+                list(hs.hit_(endpoint, method))
             # Asserts
             auth_headers.assert_called_once()
             logger.debug.assert_called_once_with(method + ' ' + full_url)
@@ -749,7 +750,7 @@ class TestClient(TestCase):
         endpoint, params = 'users', {'id': '10', 'name': 'Mike'}
         hs = self._get_client()
         with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
-                patch('helpscout.client.HelpScout.hit') as hit:
+                patch('helpscout.client.HelpScout.hit_') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = hit_return = 9
             getattr(hs, endpoint).get(params=params)
@@ -761,13 +762,51 @@ class TestClient(TestCase):
         endpoint, resource_id = 'users', 10
         hs = self._get_client()
         with patch('helpscout.client.HelpScoutObject') as HelpScoutObject, \
-                patch('helpscout.client.HelpScout.hit') as hit:
+                patch('helpscout.client.HelpScout.hit_') as hit:
             HelpScoutObject.cls.return_value = cls = MagicMock()
             hit.return_value = (x for x in range(1))
             getattr(hs, endpoint).delete(resource_id=resource_id)
             hit.assert_called_with(endpoint, 'delete', resource_id=resource_id)
             HelpScoutObject.cls.assert_not_called()
             cls.from_results.assert_not_called()
+
+    def test_getattr_requester_http_get_values(self):
+        hs = self._get_client()
+        conversations = hs.conversations
+        get_conversations = conversations.get
+        self.assertIsInstance(conversations, HelpScoutEndpointRequester)
+        self.assertEqual(conversations.endpoint, 'conversations')
+        self.assertIsInstance(get_conversations, partial)
+        self.assertEqual(get_conversations.func.__self__, hs)
+        self.assertEqual(get_conversations.func.__name__, 'get_objects')
+
+    def test_getattr_requester_http_put_values(self):
+        hs = self._get_client()
+        conversations = hs.conversations
+        put_conversations = conversations.put
+        self.assertIsInstance(conversations, HelpScoutEndpointRequester)
+        self.assertEqual(conversations.endpoint, 'conversations')
+        self.assertIsInstance(put_conversations, partial)
+        self.assertEqual(put_conversations.func.__self__, conversations)
+        self.assertEqual(put_conversations.func.__name__, '_yielded_function')
+
+    def test_getattr_requester_resource(self):
+        hs = self._get_client()
+        conversations = hs.conversations
+        conversation_requester = conversations[910]
+        self.assertIsInstance(
+            conversation_requester, HelpScoutEndpointRequester)
+        self.assertEqual(conversation_requester.client, hs)
+        self.assertEqual(conversation_requester.endpoint, 'conversations/910')
+
+    def test_getattr_requester_resource_attribute(self):
+        hs = self._get_client()
+        conversations = hs.conversations
+        conversation_requester = conversations[910]
+        tags_requester = conversation_requester.tags
+        self.assertIsInstance(tags_requester, HelpScoutEndpointRequester)
+        self.assertEqual(tags_requester.client, hs)
+        self.assertEqual(tags_requester.endpoint, 'conversations/910/tags')
 
 
 if __name__ == '__main__':

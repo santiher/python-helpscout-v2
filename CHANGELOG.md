@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented here.
 
+## [1.0.0] - 2019-09-18
+### Changed
+- HelpScoutEndpointRequester now returns subentities for methods named other
+  than http methods like get / post / put / delete / etc.
+- HelpScoutEndpointRequester can now be accessed as a dictionary to request
+  specific resources or specific resources sub endpoints (like a conversation's
+  tags).
+- The client's *hit* method has been renamed to *hit_* and *hit* nows nexts the
+  generator.
+
 ## [0.2.3] - 2019-07-16
 ### Fixed
 - Setting attributes to HelpScout objects adds them to the attributes list.

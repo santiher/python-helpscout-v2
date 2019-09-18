@@ -11,7 +11,7 @@ The client contains as little internal knowledge of the API as possible, mostly
 authentication, pagination and how are objects returned.
 
 In order to handle pagination calls to API are done inside a generator.
-As a consequence, even post and deletes have to be "nexted" if using the *hit*
+As a consequence, even post and deletes have to be "nexted" if using the *hit_*
 method.
 
 ## Installation
@@ -30,7 +30,7 @@ More about credentials can be found in
 
 ## General use
 
-The general use is by instantiating a client and then hitting the API by 
+The general use is by instantiating a client and then hitting the API by
 doing `client.<endpoint>.<method>(<resource_id>, <params>)`. Where:
 
 * *Endpoint* is one of the endpoints defined in the API's documentation.
@@ -39,6 +39,12 @@ doing `client.<endpoint>.<method>(<resource_id>, <params>)`. Where:
   update or delete. E.g.: a conversation id.
 * *Params* can be None, a string or a dictionary with the parameters to access
   in the get method or the data to send otherwise.
+
+To access attributes of specific resources, like the tags of a conversation,
+you can do:
+`client.<endpoint>[<resource_id>].<attribute>.<method>(<resource_id>, <params>)`.
+
+Example: `client.conversations[212109].threads.get()`
 
 ## Examples
 
@@ -89,6 +95,30 @@ User(id=12391,
 }
 ```
 
+### Hitting the API directly to get all mailboxes but handling requests with pagination as iteration goes on
+
+```python
+> from helpscout.client import HelpScout
+> hs = HelpScout(app_id='laknsdo', app_secret='12haosd9')
+> for mailbox in hs.hit_('mailboxes', 'get'):
+>      print(mailbox)
+{'mailboxes': [
+   {'id': 1930,
+    'name': 'Fake Support',
+    'slug': '0912301u',
+    'email': 'support@fake.com',
+    'createdAt': '2018-12-20T20:00:00Z',
+    'updatedAt': '2019-05-01T16:00:00Z',
+    '_links': {
+      'fields': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/fields/'},
+      'folders': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/folders/'},
+      'self': {'href': 'https://api.helpscout.net/v2/mailboxes/1930'}
+    }
+   }
+ ]
+}
+```
+
 ### Hitting the API directly to get a specific mailbox
 
 ```python
@@ -108,6 +138,30 @@ User(id=12391,
    'self': {'href': 'https://api.helpscout.net/v2/mailboxes/1930'}
  }
 }
+```
+
+### Hitting the API directly to get a specific mailbox dictionary style
+
+In this case, you will have to select the first element of the list yourself,
+as it is not quite clear if one or more elements should be expected from the
+api depending on the endpoint.
+
+```python
+> from helpscout.client import HelpScout
+> hs = HelpScout(app_id='laknsdo', app_secret='12haosd9')
+> print(hs.mailboxes[1930].get())
+[{'id': 1930,
+ 'name': 'Fake Support',
+ 'slug': '0912301u',
+ 'email': 'support@fake.com',
+ 'createdAt': '2018-12-20T20:00:00Z',
+ 'updatedAt': '2019-05-01T16:00:00Z',
+ '_links': {
+   'fields': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/fields/'},
+   'folders': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/folders/'},
+   'self': {'href': 'https://api.helpscout.net/v2/mailboxes/1930'}
+ }
+}]
 ```
 
 ### Listing conversations using a dictionary parameters
@@ -143,6 +197,48 @@ User(id=12391,
 > from helpscout.client import HelpScout
 > hs = HelpScout(app_id='asdon123', app_secret='asdoin1')
 > report_url = 'reports/happiness?start=2019-06-01T00:00:00Z&end=2019-06-15:00:00Z'
-> next(hs.hit(report_url, 'get'))
+> next(hs.hit_(report_url, 'get'))
 ...
+```
+
+or
+
+```python
+> from helpscout.client import HelpScout
+> hs = HelpScout(app_id='asdon123', app_secret='asdoin1')
+> report_url = 'reports/happiness?start=2019-06-01T00:00:00Z&end=2019-06-15:00:00Z'
+> hs.hit(report_url, 'get')
+...
+```
+
+### Adding tags to a conversation
+
+```python
+> from helpscout import HelpScout
+> helpscout_client = HelpScout(app_id='ax0912n', app_secret='axon129')
+> conversation_id = 999
+> endpoint = 'conversations/%s/tags' % conversation_id
+> data = {'tags': conversation_tags}
+> helpscout_client.hit(endpoint, 'put', data=data)
+```
+
+or
+
+```python
+> from helpscout import HelpScout
+> helpscout_client = HelpScout(app_id='ax0912n', app_secret='axon129')
+> conversation_id = 999
+> endpoint = 'conversations/%s/tags' % conversation_id
+> data = {'tags': conversation_tags}
+> next(helpscout_client.hit_(endpoint, 'put', data=data))
+```
+
+or
+
+```python
+> from helpscout import HelpScout
+> helpscout_client = HelpScout(app_id='ax0912n', app_secret='axon129')
+> conversation_id = 999
+> data = {'tags': conversation_tags}
+> helpscout_client.conversations[999].tags.put(data=data)
 ```
