@@ -56,6 +56,24 @@ class TestHelpScoutObject(TestCase):
         cls = HelpScoutObject.cls('users', 'users')
         self.assertTrue(issubclass(cls, HelpScoutObject))
 
+    def test_cls_name_general_endpoint_top_level(self):
+        cls = HelpScoutObject.cls('users', 'users')
+        self.assertTrue(cls.__name__, 'users')
+
+    def test_cls_name_top_level_resource_id(self):
+        cls = HelpScoutObject.cls('users/120', 'users/120')
+        self.assertTrue(cls.__name__, 'users')
+
+    def test_cls_name_down_level_general_endpoint(self):
+        endpoint = 'conversations/120/threads'
+        cls = HelpScoutObject.cls(endpoint, endpoint)
+        self.assertTrue(cls.__name__, 'threads')
+
+    def test_cls_name_down_level_resource_id(self):
+        endpoint = 'conversations/120/threads/4'
+        cls = HelpScoutObject.cls(endpoint, endpoint)
+        self.assertTrue(cls.__name__, 'threads')
+
     def test_str(self):
         cls = HelpScoutObject.cls('users', 'users')
         user = cls({'id': 12, 'name': 'Mike'})

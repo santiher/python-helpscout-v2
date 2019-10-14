@@ -61,6 +61,12 @@ class HelpScoutObject(object):
         -------
         type: The object's class
         """
+        if '/' in entity_name:
+            parts = entity_name.rsplit('/')
+            entity_name = parts[-2] if len(parts) % 2 == 0 else parts[-1]
+        if '/' in key:
+            parts = key.rsplit('/')
+            key = parts[-2] if len(parts) % 2 == 0 else parts[-1]
         plural_letters = (-2 if entity_name.endswith('es') else
                           -1 if entity_name.endswith('s') else
                           None)

@@ -89,7 +89,7 @@ class TestClient(TestCase):
         hs_path = 'helpscout.client.HelpScout.'
         hs = self._get_client()
         with patch('helpscout.client.requests') as requests, \
-                patch('helpscout.client.logger') as logger, \
+                patch('helpscout.client.logger'), \
                 patch(hs_path + '_authenticate') as auth, \
                 patch(hs_path + '_authentication_headers') as auth_headers, \
                 patch(hs_path + '_results_with_pagination') as pages:
@@ -102,7 +102,6 @@ class TestClient(TestCase):
             # Asserts
             auth.assert_called_once()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_called_once()
@@ -123,11 +122,18 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
+            response.status_code = 200
             list(hs.hit_(endpoint, method))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_called_once()
@@ -148,15 +154,23 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit_(endpoint, method, resource_id))
+            response.status_code = 200
+            ret = list(hs.hit_(endpoint, method, resource_id))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_called_once()
-            pages.assert_called_once_with(json_response, method)
+            pages.assert_not_called()
+            self.assertEqual(ret, [json_response])
 
     def test_hit_params_dict_ok(self):
         params, params_str = {'embed': 'threads'}, '?embed=threads'
@@ -174,11 +188,18 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
+            response.status_code = 200
             list(hs.hit_(endpoint, method, None, params=params))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_called_once()
@@ -200,15 +221,23 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit_(endpoint, method, resource_id, params=params))
+            response.status_code = 200
+            ret = list(hs.hit_(endpoint, method, resource_id, params=params))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_called_once()
-            pages.assert_called_once_with(json_response, method)
+            pages.assert_not_called()
+            self.assertEqual(ret, [json_response])
 
     def test_hit_resource_id_with_params_str_ok(self):
         params_str = 'embed=threads'
@@ -227,15 +256,24 @@ class TestClient(TestCase):
             response = requests.get.return_value = MagicMock()
             response.ok = True
             response.json.return_value = json_response = {'a': 'b'}
-            list(hs.hit_(endpoint, method, resource_id, params=params_str))
+            response.status_code = 200
+            ret = list(
+                hs.hit_(endpoint, method, resource_id, params=params_str))
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_called_once()
-            pages.assert_called_once_with(json_response, method)
+            pages.assert_not_called()
+            self.assertEqual(ret, [json_response])
 
     def test_hit_post_ok(self):
         endpoint, method = 'users', 'post'
@@ -257,7 +295,13 @@ class TestClient(TestCase):
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 201)'),
+                 ]
+                )
             requests.post.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_not_called()
@@ -284,7 +328,13 @@ class TestClient(TestCase):
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 204)'),
+                 ]
+                )
             requests.delete.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_not_called()
@@ -311,7 +361,13 @@ class TestClient(TestCase):
             # Asserts
             auth.assert_not_called()
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 204)'),
+                 ]
+                )
             requests.patch.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_not_called()
@@ -337,9 +393,15 @@ class TestClient(TestCase):
             list(hs.hit_(endpoint, method))
             # Asserts
             self.assertEqual(auth_headers.call_count, 2)
+            log_msg_body = method + ' ' + full_url
             self.assertEqual(
                 logger.debug.call_args_list,
-                [call(method + ' ' + full_url) for _ in range(2)])
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (False - 401)'),
+                 call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             self.assertEqual(
                 requests.get.call_args_list,
                 [call(full_url, headers=headers, json=None) for _ in range(2)])
@@ -367,9 +429,15 @@ class TestClient(TestCase):
             list(hs.hit_(endpoint, method))
             # Asserts
             self.assertEqual(auth_headers.call_count, 2)
+            log_msg_body = method + ' ' + full_url
             self.assertEqual(
                 logger.debug.call_args_list,
-                [call(method + ' ' + full_url) for _ in range(2)])
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (False - 429)'),
+                 call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (True - 200)'),
+                 ]
+                )
             self.assertEqual(
                 requests.get.call_args_list,
                 [call(full_url, headers=headers, json=None) for _ in range(2)])
@@ -401,7 +469,13 @@ class TestClient(TestCase):
                 list(hs.hit_(endpoint, method))
             # Asserts
             auth_headers.assert_called_once()
-            logger.debug.assert_called_once_with(method + ' ' + full_url)
+            log_msg_body = method + ' ' + full_url
+            self.assertEqual(
+                logger.debug.call_args_list,
+                [call('Request: ' + log_msg_body),
+                 call('Received: ' + log_msg_body + ' (False - 500)'),
+                 ]
+                )
             requests.get.assert_called_once_with(
                 full_url, headers=headers, json=None)
             response.json.assert_not_called()

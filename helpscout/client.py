@@ -17,6 +17,7 @@ from helpscout.model import HelpScoutObject
 
 logger = logging.getLogger('HelpScout')
 EmbeddedKey = '_embedded'
+PageKey = 'page'
 
 
 class HelpScout:
@@ -169,9 +170,11 @@ class HelpScout:
                 params = '&'.join('%s=%s' % (k, v) for k, v in params.items())
             url = '%s?%s' % (url, params)
         headers = self._authentication_headers()
+        logger.debug('Request: %s %s' % (method, url))
         r = getattr(requests, method)(url, headers=headers, json=data)
-        logger.debug('%s %s' % (method, url))
         ok, status_code = r.ok, r.status_code
+        logger.debug(
+            'Received: %s %s (%s - %s)' % (method, url, ok, status_code))
         if status_code in (201, 204):
             yield
         elif ok:
@@ -204,7 +207,7 @@ class HelpScout:
         dict
             The dictionary response from help scout.
         """
-        if EmbeddedKey not in response:
+        if EmbeddedKey not in response or PageKey not in response:
             yield response
             return
         if isinstance(response[EmbeddedKey], list):

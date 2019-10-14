@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [1.0.1] - 2019-10-14
+### Fixed
+- Correctly return entities when a single one is requested using a resource id
+  reflecting changes in HelpScout's API responses.
+
 ## [1.0.0] - 2019-09-18
 ### Changed
 - HelpScoutEndpointRequester now returns subentities for methods named other
