@@ -74,9 +74,10 @@ class HelpScout:
             attributes forwards the requests to the appropriate get_objects /
             hit client calls.
         """
-        return HelpScoutEndpointRequester(self, endpoint)
+        return HelpScoutEndpointRequester(self, endpoint, False)
 
-    def get_objects(self, endpoint, resource_id=None, params=None):
+    def get_objects(self, endpoint, resource_id=None, params=None,
+                    specific_resource=False):
         """Returns the objects from the endpoint filtering by the parameters.
 
         Parameters
@@ -90,6 +91,10 @@ class HelpScout:
         params: dict or str or None
             Dictionary with the parameters to send to the url.
             Or the parameters already un url format.
+        specific_resource: bool
+            Specifies if the endpoint is for an specific resource_id even if
+            the id is contained in the endpoint uri and resource_id None is
+            provided.
 
         Returns
         -------
@@ -99,7 +104,7 @@ class HelpScout:
         cls = HelpScoutObject.cls(endpoint, endpoint)
         results = cls.from_results(
             self.hit_(endpoint, 'get', resource_id, params=params))
-        if resource_id is not None:
+        if resource_id is not None or specific_resource:
             return results[0]
         return results
 
@@ -302,7 +307,7 @@ class HelpScout:
 
 class HelpScoutEndpointRequester:
 
-    def __init__(self, client, endpoint):
+    def __init__(self, client, endpoint, specific_resource):
         """Client wrapper to perform requester.get/post/put/patch/delete.
 
         Parameters
@@ -311,9 +316,13 @@ class HelpScoutEndpointRequester:
             A help scout client instance to query the API.
         endpoint: str
             One of the endpoints in the API. E.g.: conversations, mailboxes.
+        specific_resource: bool
+            Specifies if the current endpoint requester is for a single
+            specific resource id or not.
         """
         self.client = client
         self.endpoint = endpoint
+        self.specific_resource = specific_resource
 
     def __getattr__(self, method):
         """Catches http methods like get, post, patch, put and delete.
@@ -335,13 +344,20 @@ class HelpScoutEndpointRequester:
           subendpoints of specific resources, like tags from a conversation.
         """
         if method == 'get':
-            return partial(self.client.get_objects, self.endpoint)
+            return partial(
+                self.client.get_objects,
+                self.endpoint,
+                specific_resource=self.specific_resource,
+                )
         elif method in ('head', 'post', 'put', 'delete', 'patch', 'connect',
                         'options', 'trace'):
             return partial(self._yielded_function, method)
         else:
             return HelpScoutEndpointRequester(
-                self.client, urljoin(self.endpoint + '/', str(method)))
+                self.client,
+                urljoin(self.endpoint + '/', str(method)),
+                False,
+                )
 
     def __getitem__(self, resource_id):
         """Returns a second endpoint requester extending the endpoint to a
@@ -363,7 +379,10 @@ class HelpScoutEndpointRequester:
             main requester's endpoint.
         """
         return HelpScoutEndpointRequester(
-                self.client, urljoin(self.endpoint + '/', str(resource_id)))
+            self.client,
+            urljoin(self.endpoint + '/', str(resource_id)),
+            True,
+            )
 
     def _yielded_function(self, method, *args, **kwargs):
         """Calls a generator function and calls next.

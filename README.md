@@ -150,18 +150,19 @@ api depending on the endpoint.
 > from helpscout.client import HelpScout
 > hs = HelpScout(app_id='laknsdo', app_secret='12haosd9')
 > print(hs.mailboxes[1930].get())
-[{'id': 1930,
- 'name': 'Fake Support',
- 'slug': '0912301u',
- 'email': 'support@fake.com',
- 'createdAt': '2018-12-20T20:00:00Z',
- 'updatedAt': '2019-05-01T16:00:00Z',
- '_links': {
+Mailbox(
+ id=1930,
+ name='Fake Support',
+ slug='0912301u',
+ email='support@fake.com',
+ createdAt='2018-12-20T20:00:00Z',
+ updatedAt='2019-05-01T16:00:00Z',
+ _links={
    'fields': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/fields/'},
    'folders': {'href': 'https://api.helpscout.net/v2/mailboxes/1930/folders/'},
    'self': {'href': 'https://api.helpscout.net/v2/mailboxes/1930'}
  }
-}]
+)
 ```
 
 ### Listing conversations using a dictionary parameters

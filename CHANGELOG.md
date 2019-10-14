@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [2.0.0] - 2019-10-14
+### Changed
+- When requesting a single resource using the dictionary way, only a single
+  object will be returned instead of a list with a single object.
+
 ## [1.0.1] - 2019-10-14
 ### Fixed
 - Correctly return entities when a single one is requested using a resource id
